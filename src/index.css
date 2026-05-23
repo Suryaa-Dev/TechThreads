@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+@import "tailwindcss";
+/* ============================================
+   DESIGN TOKENS — Warm Neutral Premium
+   ============================================ */
+:root {
+  /* ── Backgrounds (warm neutral, no blue tint) ── */
+  --bg:     #0e0e0d;   /* page canvas */
+  --bg2:    #121211;   /* slightly lifted surface */
+  --bg3:    #161615;   /* card background */
+  --bg4:    #1e1e1c;   /* elevated card / hover */
+
+  /* ── Surface tiers ── */
+  --surface-page:    #0e0e0d;  /* outermost */
+  --surface-card:    #161615;  /* cards */
+  --surface-header:  #131312;  /* card header strip */
+  --surface-inner:   #0f0f0e;  /* inputs, stats panels */
+  --surface-code:    #0d0d10;  /* terminal / code pane */
+  --surface-hover:   #121211;  /* hot post item hover */
+
+  /* ── Borders ── */
+  --border:     #252523;  /* card edge */
+  --border2:    #2e2e2b;  /* secondary / hover border */
+  --divider:    #1e1e1c;  /* footer dividers */
+  --separator:  #272725;  /* icon separators */
+
+  /* ── Accent colors (unchanged) ── */
+  --cyan:   #00d4ff;
+  --cyan2:  #00a8cc;
+  --amber:  #f5a623;
+  --amber2: #c47d10;
+  --green:  #00e676;
+  --purple: #9c6fff;
+  --red:    #ff4c6a;
+
+  /* ── Text ── */
+  --text:   #f0f4ff;   /* primary — near-white */
+  --mid:    #d0d8ee;   /* secondary */
+  --muted:  #8b95ae;   /* muted */
+  --dim:    #6b7a99;   /* de-emphasized */
+  --ghost:  #4a5878;   /* barely-there */
+
+  /* ── Typography ── */
+  --mono: 'Space Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+.page-title {
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.page-sub {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--mono);
+  letter-spacing: 0.03em;
+}
+
+/* ============================================
+   CATEGORY TABS
+   ============================================ */
+.cat-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  font-family: var(--sans);
+}
+.cat-tab:hover { border-color: var(--border2); color: var(--text); }
+.cat-tab--active {
+  background: var(--cyan) !important;
+  border-color: var(--cyan) !important;
+  color: #000 !important;
+  font-weight: 700;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+::selection { background: rgba(0,212,255,0.22); color: var(--text); }
+
+/* ============================================
+   CODE SYNTAX
+   ============================================ */
+code, pre { font-feature-settings: "calt" 1; text-rendering: optimizeLegibility; }
+pre[class*="language-"], code[class*="language-"] { background: transparent !important; }
+code[class*="language-"] { color: #e8e8e8; }
+.token.comment     { color: #6272a4; font-style: italic; }
+.token.keyword     { color: #ff2b9e; }
+.token.string      { color: #21f6ff; }
+.token.function    { color: #d57bff; }
+.token.number      { color: #ffda6a; }
+.token.operator    { color: #ff6ac1; }
+.token.variable,
+.token.constant    { color: #8be9ff; }
+.token.attr-name   { color: #ff7b72; }
