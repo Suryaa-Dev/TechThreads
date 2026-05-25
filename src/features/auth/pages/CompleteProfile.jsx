@@ -240,7 +240,7 @@ export default function CompleteProfile() {
           You're all set, {fullName.split(' ')[0]}!
         </h2>
         <p style={{ fontFamily: C.sans, fontSize: 13, color: C.textMuted, margin: '0 0 6px' }}>
-          Welcome to TechGram. Heading to your feed…
+          Welcome to TechThreads. Heading to your feed…
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 20 }}>
           {[C.pink, C.indigo, C.cyan, C.green].map((c, i) => (
@@ -256,7 +256,7 @@ export default function CompleteProfile() {
         <div style={{ marginBottom: 24 }}>
           <p style={{ fontFamily: C.mono, fontSize: 9, color: C.cyan, margin: '0 0 10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>// step 1 of 3</p>
           <h2 style={{ fontFamily: C.sans, fontSize: 20, fontWeight: 800, color: C.text, margin: '0 0 6px' }}>Who are you?</h2>
-          <p style={{ fontFamily: C.sans, fontSize: 13, color: C.textMuted, margin: 0 }}>Your name and username identify you across TechGram.</p>
+          <p style={{ fontFamily: C.sans, fontSize: 13, color: C.textMuted, margin: 0 }}>Your name and username identify you across TechThreads.</p>
         </div>
 
         <InputField
