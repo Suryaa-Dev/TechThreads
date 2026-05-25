@@ -1,21 +1,3 @@
-// src/features/profile/pages/Profile.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// EDIT MODAL EXPANDED:
-//   NEW — Avatar upload
-//     - Click the avatar ring in the modal to pick an image
-//     - Live preview replaces the current avatar immediately
-//     - On save: uploads to Supabase storage bucket "avatars",
-//       writes public URL to profiles.avatar_url via updateProfile()
-//     - Upload progress ring animates around the preview
-//   NEW — Full name field (was missing, maps to profiles.full_name)
-//   NEW — Username field  (maps to profiles.username, uniqueness hint shown)
-//   EXISTING — Bio, GitHub URL, Portfolio URL, Resume PDF, Open to Work (all unchanged)
-//
-// All backend logic / service calls UNCHANGED except:
-//   uploadAvatar() helper added below (uses supabase.storage "avatars" bucket,
-//   same pattern as uploadResume in userService.js)
-// ─────────────────────────────────────────────────────────────────────────────
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +28,8 @@ import {
   FiMessageSquare, FiUsers, FiCamera
 } from 'react-icons/fi';
 import { HiOutlineLightningBolt } from 'react-icons/hi';
+import ShareProfileModal from '../components/ShareProfileModal';
+import { FiShare2 } from 'react-icons/fi';
 
 const T = {
   bg: '#0a0a09', panel: '#111110', card: '#161615', border: '#1f1f1d', borderH: '#2e2e2b',
@@ -542,6 +526,8 @@ const Profile = () => {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [shareModal, setShareModal] = useState(false);
+
 
   const switchTab = (t) => { setActiveTab(t); setTabKey(k => k + 1); };
 
@@ -883,7 +869,7 @@ const Profile = () => {
 
           <div style={{ flex: 1 }} />
 
-          <div style={{ padding: '20px 16px', flexShrink: 0 }}>
+          <div style={{ padding: '20px 16px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button onClick={openModal}
               onMouseEnter={() => setBtnHov(true)} onMouseLeave={() => setBtnHov(false)}
               style={{
@@ -901,6 +887,19 @@ const Profile = () => {
                 animation: btnHov ? 'glintSweep 1.2s linear infinite' : 'none'
               }}>
               <FiEdit2 size={13} /> edit profile
+            </button>
+            <button onClick={() => setShareModal(true)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 12,
+                border: `1px solid ${T.borderH}`, background: 'transparent',
+                color: T.faint, fontFamily: T.mono, fontSize: 11, fontWeight: 700,
+                cursor: 'pointer', letterSpacing: '0.05em', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = T.indigo; e.currentTarget.style.borderColor = `${T.indigo}45`; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = T.faint; e.currentTarget.style.borderColor = T.borderH; e.currentTarget.style.transform = 'none'; }}
+            >
+              <FiShare2 size={13} /> share profile
             </button>
           </div>
         </aside>
@@ -1295,6 +1294,14 @@ const Profile = () => {
           }}
           onClose={() => setIsPostModalOpen(false)}
           onDelete={id => setMyPosts(prev => prev.filter(p => p.id !== id))} />
+      )}
+
+      {shareModal && profile && (
+        <ShareProfileModal
+          userId={profile.id}
+          userName={profile.name}
+          onClose={() => setShareModal(false)}
+        />
       )}
     </div>
   );
