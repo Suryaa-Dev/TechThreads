@@ -1,39 +1,4 @@
 // src/features/profile/pages/UserProfile.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATION ADDITIONS (all backend logic / service calls UNCHANGED):
-//
-//   SIDEBAR:
-//     - Slides in from left on mount (sidebarReveal, 0.5s spring)
-//     - Back button: micro-lift + arrow slides left on hover
-//     - Avatar ring: continuous conic-gradient rotation
-//     - Ambient glow blob: breathes with orbitPulse
-//     - Name / handle: staggered fadeSlideUp (150ms apart)
-//     - Follow button: spring-bounce scale on state change, shimmer sweep on hover
-//     - Message button: glow pulse on hover
-//     - Stat rows: staggered entrance + count-up numbers + spring translateX on hover
-//     - Link pills: spring translateX + glow on hover
-//
-//   TAB BAR:
-//     - Sticky bar fades down from top
-//     - Active tab: animated underline indicator sweeps in
-//     - Tab icon scales on active
-//
-//   CONTENT:
-//     - Every tab switch re-keys panel → contentReveal (fade + scale)
-//     - Post cards: staggered cardEntrance (40ms apart)
-//     - Project cards: staggered entrance (50ms apart)
-//     - Community cards: hover lift + cover zoom + title color change
-//     - Empty states: emoji bobs up/down continuously
-//
-//   FOLLOW BUTTON:
-//     - On click: button does a quick springPop scale
-//     - "Following" hover morphs to red "unfollow" text with border flash
-//
-//   MODALS:
-//     - Backdrop animates in (backdropIn)
-//     - All modals slide up + scale from 0.95
-// ─────────────────────────────────────────────────────────────────────────────
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../../services/supabaseClient';
@@ -52,10 +17,11 @@ import PostModal from '../../feed/components/PostModal';
 import FollowListModal from '../components/FollowListModal';
 import MessageModal from '../components/MessageModal';
 import BadgesTab from '../components/BadgesTab';
+import ShareProfileModal from '../components/ShareProfileModal';
 
 import { FaGithub, FaUserPlus, FaUserCheck } from 'react-icons/fa';
 import { MdContactPage } from 'react-icons/md';
-import { FiGlobe, FiArrowLeft, FiMessageSquare, FiUsers } from 'react-icons/fi';
+import { FiGlobe, FiArrowLeft, FiMessageSquare, FiUsers, FiShare2 } from 'react-icons/fi';
 import { HiOutlineLightningBolt } from 'react-icons/hi';
 
 const T = {
@@ -377,7 +343,9 @@ const UserProfile = () => {
   const [followModal, setFollowModal] = useState(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [messageModal, setMessageModal] = useState(false);
+  const [shareModal, setShareModal] = useState(false);
   const [msgHov, setMsgHov] = useState(false);
+  const [shareHov, setShareHov] = useState(false);
   const [backHov, setBackHov] = useState(false);
 
   const switchTab = (t) => { setActiveTab(t); setTabKey(k => k + 1); };
@@ -416,11 +384,19 @@ const UserProfile = () => {
       const { followers, following: followingCount } = await getFollowCounts(profileRow.id);
       setStats({
         posts: allPosts.filter(p => p.type === 'code').length,
-        projects: allPosts.filter(p => p.type === 'project').length, followers, following: followingCount
+        projects: allPosts.filter(p => p.type === 'project').length,
+        followers,
+        following: followingCount
       });
 
-      if (me) { const isF = await checkIsFollowing(me.id, profileRow.id); setFollowing(isF); }
-    } catch (err) { console.error('UserProfile load error:', err); setNotFound(true); }
+      if (me) {
+        const isF = await checkIsFollowing(me.id, profileRow.id);
+        setFollowing(isF);
+      }
+    } catch (err) {
+      console.error('UserProfile load error:', err);
+      setNotFound(true);
+    }
     setLoading(false);
   }, [username, id, navigate, me]);
 
@@ -453,10 +429,10 @@ const UserProfile = () => {
   if (notFound) return <NotFound onBack={() => navigate(-1)} />;
 
   const tabs = [
-    { id: 'posts', label: 'posts', icon: <HiOutlineLightningBolt size={12} /> },
-    { id: 'projects', label: 'projects', icon: <FiGlobe size={11} /> },
+    { id: 'posts',       label: 'posts',       icon: <HiOutlineLightningBolt size={12} /> },
+    { id: 'projects',    label: 'projects',    icon: <FiGlobe size={11} /> },
     { id: 'communities', label: 'communities', icon: <FiUsers size={11} /> },
-    { id: 'badges', label: 'badges', icon: <span style={{ fontSize: 11 }}>🏅</span> },
+    { id: 'badges',      label: 'badges',      icon: <span style={{ fontSize: 11 }}>🏅</span> },
   ];
 
   return (
@@ -484,12 +460,14 @@ const UserProfile = () => {
                 cursor: 'pointer', letterSpacing: '0.06em', transition: 'all 0.2s',
                 transform: backHov ? 'translateX(-2px)' : 'none'
               }}>
-              <FiArrowLeft size={11} style={{ transition: 'transform 0.2s', transform: backHov ? 'translateX(-2px)' : 'none' }} /> back
+              <FiArrowLeft size={11} style={{ transition: 'transform 0.2s', transform: backHov ? 'translateX(-2px)' : 'none' }} />
+              back
             </button>
           </div>
 
           {/* identity */}
           <div style={{ position: 'relative', padding: '24px 24px 0', flexShrink: 0 }}>
+
             {/* ambient glow */}
             <div style={{
               position: 'absolute', top: 0, left: '50%',
@@ -540,61 +518,86 @@ const UserProfile = () => {
             )}
 
             {/* action buttons */}
-            {me && (
-              <div style={{
-                display: 'flex', gap: 8, marginBottom: 6, position: 'relative', zIndex: 1,
-                animation: 'fadeSlideUp 0.4s ease 0.34s both'
-              }}>
-                {/* message */}
-                <button onClick={() => setMessageModal(true)}
-                  onMouseEnter={() => setMsgHov(true)} onMouseLeave={() => setMsgHov(false)}
-                  style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: 7, padding: '9px', borderRadius: 10,
-                    border: `1px solid ${T.indigo}35`,
-                    background: 'rgba(129,140,248,0.08)', color: T.indigo,
-                    fontFamily: T.mono, fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    transform: msgHov ? 'translateY(-1px)' : 'none',
-                    animation: msgHov ? 'msgGlow 1.5s ease-in-out infinite' : 'none',
-                    boxShadow: msgHov ? `0 4px 14px rgba(129,140,248,0.2)` : 'none'
-                  }}>
-                  <FiMessageSquare size={12} /> message
-                </button>
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 8,
+              marginBottom: 6, position: 'relative', zIndex: 1,
+              animation: 'fadeSlideUp 0.4s ease 0.34s both'
+            }}>
+              {/* message + follow row — only when logged in */}
+              {me && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {/* message */}
+                  <button onClick={() => setMessageModal(true)}
+                    onMouseEnter={() => setMsgHov(true)} onMouseLeave={() => setMsgHov(false)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      gap: 7, padding: '9px', borderRadius: 10,
+                      border: `1px solid ${T.indigo}35`,
+                      background: 'rgba(129,140,248,0.08)', color: T.indigo,
+                      fontFamily: T.mono, fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      transform: msgHov ? 'translateY(-1px)' : 'none',
+                      animation: msgHov ? 'msgGlow 1.5s ease-in-out infinite' : 'none',
+                      boxShadow: msgHov ? `0 4px 14px rgba(129,140,248,0.2)` : 'none'
+                    }}>
+                    <FiMessageSquare size={12} /> message
+                  </button>
 
-                {/* follow */}
-                <button onClick={handleFollow} disabled={followLoading}
-                  onMouseEnter={() => setFollowHov(true)}
-                  onMouseLeave={() => setFollowHov(false)}
-                  onAnimationEnd={() => setFollowPop(false)}
-                  style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: 7, padding: '9px', borderRadius: 10,
-                    fontFamily: T.mono, fontSize: 10, fontWeight: 700,
-                    cursor: followLoading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    animation: followPop ? 'springPop 0.4s ease' : 'none',
-                    ...(following
-                      ? {
-                        background: followHov ? 'rgba(248,113,113,0.08)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${followHov ? 'rgba(248,113,113,0.35)' : T.borderH}`,
-                        color: followHov ? '#f87171' : T.muted,
-                        transform: followHov ? 'translateY(-1px)' : 'none'
-                      }
-                      : {
-                        background: `${T.pink}10`, border: `1px solid ${T.pink}40`, color: T.pink,
-                        boxShadow: followHov ? `0 4px 14px ${T.pink}25` : '0 0 16px rgba(244,114,182,0.1)',
-                        transform: followHov ? 'translateY(-1px)' : 'none'
-                      }
-                    )
-                  }}>
-                  {following
-                    ? <><FaUserCheck size={11} />{followHov ? 'unfollow' : 'following'}</>
-                    : <><FaUserPlus size={11} />follow</>
-                  }
-                </button>
-              </div>
-            )}
+                  {/* follow */}
+                  <button onClick={handleFollow} disabled={followLoading}
+                    onMouseEnter={() => setFollowHov(true)}
+                    onMouseLeave={() => setFollowHov(false)}
+                    onAnimationEnd={() => setFollowPop(false)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      gap: 7, padding: '9px', borderRadius: 10,
+                      fontFamily: T.mono, fontSize: 10, fontWeight: 700,
+                      cursor: followLoading ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      animation: followPop ? 'springPop 0.4s ease' : 'none',
+                      ...(following
+                        ? {
+                          background: followHov ? 'rgba(248,113,113,0.08)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${followHov ? 'rgba(248,113,113,0.35)' : T.borderH}`,
+                          color: followHov ? '#f87171' : T.muted,
+                          transform: followHov ? 'translateY(-1px)' : 'none'
+                        }
+                        : {
+                          background: `${T.pink}10`, border: `1px solid ${T.pink}40`, color: T.pink,
+                          boxShadow: followHov ? `0 4px 14px ${T.pink}25` : '0 0 16px rgba(244,114,182,0.1)',
+                          transform: followHov ? 'translateY(-1px)' : 'none'
+                        }
+                      )
+                    }}>
+                    {following
+                      ? <><FaUserCheck size={11} />{followHov ? 'unfollow' : 'following'}</>
+                      : <><FaUserPlus size={11} />follow</>
+                    }
+                  </button>
+                </div>
+              )}
+
+              {/* share — always visible */}
+              <button
+                onClick={() => setShareModal(true)}
+                onMouseEnter={() => setShareHov(true)}
+                onMouseLeave={() => setShareHov(false)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, padding: '9px', borderRadius: 10,
+                  border: `1px solid ${shareHov ? `${T.indigo}45` : T.border}`,
+                  background: shareHov ? 'rgba(129,140,248,0.07)' : 'transparent',
+                  color: shareHov ? T.indigo : T.faint,
+                  fontFamily: T.mono, fontSize: 10, fontWeight: 700,
+                  cursor: 'pointer', letterSpacing: '0.04em',
+                  transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                  transform: shareHov ? 'translateY(-1px)' : 'none',
+                  boxShadow: shareHov ? `0 4px 14px rgba(129,140,248,0.12)` : 'none',
+                }}
+              >
+                <FiShare2 size={12} /> share profile
+              </button>
+            </div>
           </div>
 
           <div style={{ height: 1, background: T.border, margin: '18px 24px 18px', flexShrink: 0 }} />
@@ -602,10 +605,10 @@ const UserProfile = () => {
           {/* stats */}
           <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
             <p style={{ fontFamily: T.mono, fontSize: 8, color: T.faint, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px 4px' }}>stats</p>
-            <StatRow value={stats.posts} label="posts" color={T.pink} delay={100} />
-            <StatRow value={stats.projects} label="projects" color={T.indigo} delay={160} />
-            <StatRow value={stats.followers} label="followers" color={T.green} delay={220} onClick={() => setFollowModal('followers')} />
-            <StatRow value={stats.following} label="following" color={T.amber} delay={280} onClick={() => setFollowModal('following')} />
+            <StatRow value={stats.posts}     label="posts"     color={T.pink}  delay={100} />
+            <StatRow value={stats.projects}  label="projects"  color={T.indigo} delay={160} />
+            <StatRow value={stats.followers} label="followers" color={T.green}  delay={220} onClick={() => setFollowModal('followers')} />
+            <StatRow value={stats.following} label="following" color={T.amber}  delay={280} onClick={() => setFollowModal('following')} />
           </div>
 
           {(profile.github_url || profile.website_url || profile.resume_url) && (
@@ -613,12 +616,13 @@ const UserProfile = () => {
               <div style={{ height: 1, background: T.border, margin: '20px 24px 18px', flexShrink: 0 }} />
               <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                 <p style={{ fontFamily: T.mono, fontSize: 8, color: T.faint, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px 4px' }}>links</p>
-                {profile.github_url && <SideLink href={profile.github_url} icon={<FaGithub size={14} />} label="GitHub" color={T.text} />}
-                {profile.website_url && <SideLink href={profile.website_url} icon={<FiGlobe size={14} />} label="Portfolio" color={T.indigo} />}
-                {profile.resume_url && <SideLink href={profile.resume_url} icon={<MdContactPage size={14} />} label="Resume" color={T.pink} />}
+                {profile.github_url  && <SideLink href={profile.github_url}  icon={<FaGithub size={14} />}      label="GitHub"    color={T.text}   />}
+                {profile.website_url && <SideLink href={profile.website_url} icon={<FiGlobe size={14} />}       label="Portfolio" color={T.indigo} />}
+                {profile.resume_url  && <SideLink href={profile.resume_url}  icon={<MdContactPage size={14} />} label="Resume"    color={T.pink}   />}
               </div>
             </>
           )}
+
           <div style={{ flex: 1 }} />
         </aside>
 
@@ -653,7 +657,8 @@ const UserProfile = () => {
                     <div key={p.id} style={{ animation: `cardEntrance 0.35s ease both`, animationDelay: `${i * 40}ms` }}>
                       <PostCardMini
                         post={{ id: p.id, fileName: p.file_name, code: p.code, caption: p.caption, likes: p.likes, comments: p.comments }}
-                        onClick={() => { setSelectedPost(p); setIsPostModalOpen(true); }} />
+                        onClick={() => { setSelectedPost(p); setIsPostModalOpen(true); }}
+                      />
                     </div>
                   ))
                 }
@@ -673,7 +678,8 @@ const UserProfile = () => {
                           github_username: profile?.username ?? null,
                           author_avatar: profile?.avatar ?? null,
                         }}
-                        currentUser={me} />
+                        currentUser={me}
+                      />
                     </div>
                   ))
                 }
@@ -692,24 +698,38 @@ const UserProfile = () => {
             )}
 
             {activeTab === 'badges' && (
-              <BadgesTab userId={profile?.id} userName={profile?.name}
-                userInitials={getInitials(profile?.name ?? '')} />
+              <BadgesTab
+                userId={profile?.id}
+                userName={profile?.name}
+                userInitials={getInitials(profile?.name ?? '')}
+              />
             )}
           </div>
         </main>
       </div>
 
-      {/* modals */}
+      {/* ── modals ── */}
       {followModal && profile && (
         <div style={{ animation: 'backdropIn 0.2s ease both' }}>
-          <FollowListModal mode={followModal} targetUserId={profile.id}
-            currentUserId={me?.id ?? null} onClose={() => setFollowModal(null)} />
+          <FollowListModal
+            mode={followModal}
+            targetUserId={profile.id}
+            currentUserId={me?.id ?? null}
+            onClose={() => setFollowModal(null)}
+          />
         </div>
       )}
       {messageModal && profile && (
         <div style={{ animation: 'backdropIn 0.2s ease both' }}>
           <MessageModal developer={profile} onClose={() => setMessageModal(false)} />
         </div>
+      )}
+      {shareModal && profile && (
+        <ShareProfileModal
+          userId={profile.id}
+          userName={profile.username}
+          onClose={() => setShareModal(false)}
+        />
       )}
       {isPostModalOpen && selectedPost && (
         <PostModal
@@ -721,7 +741,8 @@ const UserProfile = () => {
             likes: selectedPost.likes, comments: selectedPost.comments
           }}
           onClose={() => setIsPostModalOpen(false)}
-          onDelete={null} />
+          onDelete={null}
+        />
       )}
     </div>
   );
