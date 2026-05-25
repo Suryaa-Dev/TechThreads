@@ -1,15 +1,3 @@
-// src/app/App.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// FIXES:
-//   1. Removed the broken init() function that was incorrectly placed inside
-//      AppContent (it referenced supabase/mounted/setUser which don't exist
-//      there — would have crashed at runtime).
-//   2. Fixed ADMIN_ROUTES to match actual <Route> paths so the sidebar
-//      correctly hides on admin pages.
-//   3. Replaced `return null` on loading with a visible spinner — so a blank
-//      dark screen never appears even if auth takes a moment.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import React from 'react';
 import {
   BrowserRouter as Router,
